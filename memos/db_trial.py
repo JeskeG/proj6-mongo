@@ -14,7 +14,7 @@ import sys
 import config
 CONFIG = config.configuration()
 
-MONGO_CLIENT_URL = "mongodb://{}:{}@{}:{}/{}".format(
+MONGO_CLIENT_URL = "mongodb://{}:{}@{}.{}/{}".format(
     CONFIG.DB_USER,
     CONFIG.DB_USER_PW,
     CONFIG.DB_HOST, 
@@ -40,19 +40,17 @@ except Exception as err:
 # run successfuly inserted them
 # 
 
-record = { "type": "dated_memo", 
-           "date":  arrow.utcnow().naive,
-           "text": "This is a sample memo"
-          }
+record = {"type": "dated_memo",
+          "date":  arrow.utcnow().naive,
+          "text": "This is a sample memo"}
 
 print("Inserting 1")
-collection.insert(record)
+collection.insert_one(record)
 print("Inserted")
 
-record = { "type": "dated_memo", 
-           "date":  arrow.utcnow().replace(days=+1).naive,
-           "text": "Sample one day later"
-          }
+record = {"type": "dated_memo",
+          "date":  arrow.utcnow().replace(days=+1).naive,
+          "text": "Sample one day later"}
 
 print("Inserting 2")
 collection.insert(record)
@@ -70,10 +68,10 @@ print("Reading database")
 
 records = [ ] 
 for record in collection.find( { "type": "dated_memo" } ):
-   records.append(
-        { "type": record['type'],
-          "date": arrow.get(record['date']).to('local').isoformat(),
-           "text": record['text']
+    records.append(
+        {"type": record['type'],
+         "date": arrow.get(record['date']).to('local').isoformat(),
+         "text": record['text']
     })
 
 print("Records: ")

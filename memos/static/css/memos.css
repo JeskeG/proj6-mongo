@@ -13,3 +13,7 @@
 .attribution  {
     font-size: smaller;
 }
+
+.boxed {
+  border: 1px solid black ;
+}

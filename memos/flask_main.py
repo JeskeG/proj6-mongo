@@ -17,6 +17,7 @@ from flask import g
 from flask import render_template
 from flask import request
 from flask import url_for
+from bson import ObjectId
 
 import json
 import logging
@@ -34,7 +35,7 @@ import config
 CONFIG = config.configuration()
 
 
-MONGO_CLIENT_URL = "mongodb://{}:{}@{}:{}/{}".format(
+MONGO_CLIENT_URL = "mongodb://{}:{}@{}.{}/{}".format(
     CONFIG.DB_USER,
     CONFIG.DB_USER_PW,
     CONFIG.DB_HOST, 
@@ -75,17 +76,37 @@ except:
 @app.route("/index")
 def index():
   app.logger.debug("Main page entry")
-  g.memos = get_memos()
-  for memo in g.memos: 
+  flask.session.memos = get_memos()
+  for memo in flask.session.memos:
       app.logger.debug("Memo: " + str(memo))
   return flask.render_template('index.html')
 
 
-# We don't have an interface for creating memos yet
-# @app.route("/create")
-# def create():
-#     app.logger.debug("Create")
-#     return flask.render_template('create.html')
+@app.route("/create")
+def create():
+    app.logger.debug("Create")
+    date = request.args.get('date', type=str)
+    memo = request.args.get("memo", type=str)
+    app.logger.debug("Memo date = " + str(date))
+    app.logger.debug("Memo to create " + str(memo))
+    new = {"type": "dated_memo",
+          "date":  date,
+          "text": memo}
+    app.logger.debug("Created dict:" + str(new))
+    collection.insert_one(new)
+    app.logger.debug("memo inserted to collection")
+    app.logger.debug("Updated after inserted memos:")
+    return flask.render_template('index.html')
+
+
+@app.route("/remove")
+def remove():
+    app.logger.debug("Remove")
+    memo = request.args.get("memo", type=str)
+    app.logger.debug("memo to delete:" + str(memo))
+    collection.delete_one({"_id": ObjectId(memo)})
+    app.logger.debug("Updated after deleted memos:")
+    return flask.render_template('index.html')
 
 
 @app.errorhandler(404)
@@ -102,8 +123,8 @@ def page_not_found(error):
 #################
 
 
-@app.template_filter( 'humanize' )
-def humanize_arrow_date( date ):
+@app.template_filter('humanize')
+def humanize_arrow_date(date):
     """
     Date is internal UTC ISO format string.
     Output should be "today", "yesterday", "in 5 days", etc.
@@ -117,7 +138,7 @@ def humanize_arrow_date( date ):
             human = "Today"
         else: 
             human = then.humanize(now)
-            if human == "in a day":
+            if human == "In a Day":
                 human = "Tomorrow"
     except: 
         human = date
@@ -134,17 +155,23 @@ def get_memos():
     Returns all memos in the database, in a form that
     can be inserted directly in the 'session' object.
     """
-    records = [ ]
-    for record in collection.find( { "type": "dated_memo" } ):
+    records = []
+    for record in collection.find({"type": "dated_memo"}):
         record['date'] = arrow.get(record['date']).isoformat()
-        del record['_id']
+        record['_id'] = str(record['_id'])
         records.append(record)
-    return records 
+    records = sorted(records, key=to_arrow)
+    app.logger.debug("memos = " + str(records))
+    return records
 
+
+def to_arrow(dct):
+    date = dct['date']
+    return arrow.get(date)
 
 if __name__ == "__main__":
-    app.debug=CONFIG.DEBUG
+    app.debug = CONFIG.DEBUG
     app.logger.setLevel(logging.DEBUG)
-    app.run(port=CONFIG.PORT,host="0.0.0.0")
+    app.run(port=CONFIG.PORT, host="0.0.0.0")
 
-    
+

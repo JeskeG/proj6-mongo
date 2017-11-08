@@ -23,6 +23,7 @@
 
 </head>
 <body>
+
 <div class="container">
 
 <!-- Flashed messages before content -->
@@ -37,9 +38,22 @@
 {% endwith %}
 
 <h1>Memos</h1>
+  <div class="col-md-10">
+    <div align="right">
+<input type="button" class="submit"  value="Create New Memo" />
 
-{% if g.memos %}
-    {% for memo in g.memos %}
+      <input type=date name="date" id="date" value="2017-12-12" />
+
+<td><input id="memo" type="text"
+        placeholder="Type new memo here"
+	style="font-size:12pt;height:120px;width:200px;" /> </td>
+      </div>
+
+
+{% if session.memos %}
+    {% for memo in session.memos %}
+  <div class="boxed">
+  {%set id = memo._id%}
   <div class="memo">
   <div class="row">
   <div class="col-md-2">
@@ -48,15 +62,33 @@
   <div class="col-md-10">
     {{ memo.text }}
   </div>
+    <div align="right">
+        <input type="button" class="remove"  value="Delete" id= {{id}} />
+      </div>
   </div> <!-- row -->
   </div> <!-- memo -->
+  </div> <!-- boxed -->
   {% endfor %}
 {% else %}
   <p>No memos for you. </p>  
 {% endif %}
 
- 
+<script type="text/javascript">
 
-</div> <!-- container -->
+$(".submit").on("click", function(event){
+    var date = $("#date").val();
+    var memo = $("#memo").val();
+$.getJSON("/create", {date:date, memo:memo});
+});
+
+
+$(".remove").on("click", function(event){
+    var memo = this.id;
+    console.log("Memo to delete:"+ memo);
+    $.getJSON("/remove", {memo:memo})
+});
+
+</script>
+
 </body>
 </html>

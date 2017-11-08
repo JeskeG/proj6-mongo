@@ -12,10 +12,11 @@ import sys
 import config
 CONFIG = config.configuration()
 
-MONGO_ADMIN_URL = "mongodb://{}:{}@{}:{}/admin".format(
+
+MONGO_ADMIN_URL = "mongodb://{}:{}@{}.{}/admin".format(
     CONFIG.ADMIN_USER,
     CONFIG.ADMIN_PW,
-    CONFIG.DB_HOST, 
+    CONFIG.DB_HOST,
     CONFIG.DB_PORT)
 
 try: 
